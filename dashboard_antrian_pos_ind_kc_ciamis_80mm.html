@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS IND KC CIAMIS 46200 - Sistem Antrian TV & Struk 80mm</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Inconsolata -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Inconsolata:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        receipt: ['Inconsolata', 'monospace']
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'marquee': 'marquee 22s linear infinite',
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(-100%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* CSS Khusus Cetak Thermal 80mm */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #thermal-receipt-container, #thermal-receipt-container * {
+                visibility: visible !important;
+            }
+            #thermal-receipt-container {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 80mm !important;
+                max-width: 80mm !important;
+                padding: 3mm 4mm !important;
+                margin: 0 !important;
+                color: #000 !important;
+                background: #fff !important;
+                font-family: 'Inconsolata', monospace !important;
+                font-size: 13px !important;
+                line-height: 1.3 !important;
+                box-sizing: border-box !important;
+            }
+            @page {
+                size: 80mm auto;
+                margin: 0mm;
+            }
+        }
+
+        /* Simulasi Kertas Thermal 80mm di Screen */
+        .preview-80mm {
+            width: 78mm;
+            min-height: 95mm;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Highlight Animasi Saat Nomor Baru Dipanggil di TV Display */
+        .call-flash {
+            animation: flashBackground 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes flashBackground {
+            from {
+                border-color: #10b981;
+                box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+            }
+            to {
+                border-color: #f59e0b;
+                box-shadow: 0 0 45px rgba(245, 158, 11, 0.9);
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-950/90 border-b border-slate-800 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-orange-500 to-amber-400 p-2 rounded-xl text-slate-950 font-black shadow-lg shadow-orange-500/20">
+                    <i class="fa-solid fa-envelope-open-text text-xl"></i>
+                </div>
+                <div>
+                    <h1 id="header-shop-title" class="text-sm sm:text-base font-extrabold text-white tracking-wide">POS IND KC CIAMIS 46200</h1>
+                    <p class="text-[10px] sm:text-xs text-slate-400">Sistem Antrian Display TV & Cetak Struk 80mm</p>
+                </div>
+            </div>
+
+            <!-- View Switcher Tabs -->
+            <div class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
+                <button onclick="window.switchTab('display')" id="tab-btn-display" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-2 bg-emerald-500 text-slate-950 shadow-md">
+                    <i class="fa-solid fa-desktop"></i>
+                    <span class="hidden sm:inline">Layar TV Monitor</span>
+                </button>
+                <button onclick="window.switchTab('operator')" id="tab-btn-operator" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center space-x-2">
+                    <i class="fa-solid fa-headset"></i>
+                    <span class="hidden sm:inline">Operator / Cetak Tiket</span>
+                </button>
+            </div>
+
+            <!-- Top Controls -->
+            <div class="hidden md:flex items-center space-x-3">
+                <div id="sync-status-badge" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-semibold flex items-center space-x-1.5 cursor-pointer" onclick="window.toggleSettingsModal()">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>🟢 Real-time Multi-PC</span>
+                </div>
+                <button onclick="window.toggleFullScreen()" title="Layar Penuh TV" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition">
+                    <i class="fa-solid fa-expand text-emerald-400"></i>
+                </button>
+                <button onclick="window.toggleSettingsModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-gear text-emerald-400"></i>
+                    <span>Pengaturan</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mode View 1: Layar TV Display (Big Screen View) -->
+    <main id="view-display" class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col justify-between space-y-6">
+        
+        <!-- Header TV Clock & Info -->
+        <div class="bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">STATUS DISPLAY: SIARAN LANGSUNG</span>
+            </div>
+            
+            <div class="flex items-center space-x-6 text-slate-300 font-mono">
+                <div class="text-center sm:text-right">
+                    <div id="tv-date-display" class="text-xs font-medium text-slate-400">---</div>
+                    <div id="tv-clock-display" class="text-2xl font-black text-emerald-400 tracking-wider">--:--:-- WIB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Display Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch flex-1">
+            
+            <!-- Hero Card: Currently Called Queue Number -->
+            <div class="lg:col-span-7 bg-slate-950/80 border-2 border-emerald-500/50 rounded-3xl p-6 sm:p-8 flex flex-col justify-between text-center shadow-2xl relative overflow-hidden group transition-all" id="main-call-hero-box">
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div>
+                    <div class="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-4 py-1.5 rounded-full text-emerald-400 font-bold text-xs uppercase tracking-widest mb-4">
+                        <i class="fa-solid fa-bullhorn text-sm animate-bounce"></i>
+                        <span>SEDANG DIPANGGIL</span>
+                    </div>
+
+                    <div id="display-called-number" class="text-7xl sm:text-8xl lg:text-9xl font-black tracking-tight font-mono text-white my-2 drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)]">
+                        ---
+                    </div>
+
+                    <div id="display-called-category" class="text-lg sm:text-xl font-bold text-emerald-300 uppercase tracking-wide">
+                        MENUNGGU PEMANGGILAN
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-slate-800/80 flex items-center justify-center space-x-3">
+                    <span class="text-slate-400 font-medium text-sm sm:text-base">SILAKAN MENUJU KE:</span>
+                    <span id="display-called-counter" class="text-2xl sm:text-3xl font-black text-amber-400 font-mono bg-amber-500/10 border border-amber-500/30 px-5 py-1.5 rounded-2xl">
+                        ---
+                    </span>
+                </div>
+            </div>
+
+            <!-- Side Card: Active Counters Status Grid -->
+            <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
+                <div class="bg-slate-950/80 border border-slate-800 rounded-3xl p-5 flex-1 flex flex-col">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                        <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-list-check text-emerald-400"></i>
+                            <span>STATUS LOKET LAYANAN</span>
+                        </h3>
+                        <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono font-bold">4 LOKET</span>
+                    </div>
+
+                    <!-- Counters Status Grid -->
+                    <div class="grid grid-cols-2 gap-3 flex-1" id="tv-counters-grid">
+                        <!-- Injected via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Waiting Summary Widget -->
+                <div class="bg-gradient-to-r from-slate-950 to-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">
+                            <i class="fa-solid fa-users text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium">Sisa Antrian Menunggu</p>
+                            <h4 id="display-waiting-count" class="text-2xl font-black text-white font-mono">0 Orang</h4>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400 font-medium">Total Terbit Hari Ini</p>
+                        <h4 id="display-total-count" class="text-2xl font-black text-emerald-400 font-mono">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marquee Running Text -->
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 overflow-hidden shadow-lg flex items-center">
+            <div class="bg-emerald-500 text-slate-950 font-black text-xs px-3 py-1 rounded-lg uppercase tracking-wider mr-3 whitespace-nowrap z-10 shadow">
+                <i class="fa-solid fa-bullhorn mr-1"></i> INFO
+            </div>
+            <div class="overflow-hidden relative w-full text-xs font-semibold text-slate-300">
+                <div id="tv-marquee-text" class="whitespace-nowrap animate-marquee inline-block">
+                    Selamat datang di POS INDONESIA KC CIAMIS 46200. Mohon menunggu nomor antrian Anda dipanggil. Harap persiapkan dokumen Anda.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mode View 2: Dashboard Kontrol Operator / Cetak Tiket Kios -->
+    <main id="view-operator" class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6 hidden">
+        
+        <!-- Top Stats Badges Summary -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sedang Dipanggil</p>
+                    <h3 id="stat-op-current" class="text-2xl font-black text-emerald-400 mt-1 font-mono">---</h3>
+                </div>
+                <div class="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 text-xl">
+                    <i class="fa-solid fa-bullhorn"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Tiket</p>
+                    <h3 id="stat-op-total" class="text-2xl font-black text-white mt-1 font-mono">0</h3>
+                </div>
+                <div class="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 text-xl">
+                    <i class="fa-solid fa-ticket"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Menunggu</p>
+                    <h3 id="stat-op-waiting" class="text-2xl font-black text-amber-400 mt-1 font-mono">0</h3>
+                </div>
+                <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 text-xl">
+                    <i class="fa-regular fa-clock"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Selesai Dilayani</p>
+                    <h3 id="stat-op-completed" class="text-2xl font-black text-slate-300 mt-1 font-mono">0</h3>
+                </div>
+                <div class="p-2.5 bg-slate-800 text-slate-400 rounded-xl border border-slate-700 text-xl">
+                    <i class="fa-solid fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two Columns Control Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Side Controls: Call Operations & Take Ticket Buttons -->
+            <div class="lg:col-span-6 space-y-6">
+                
+                <!-- Box 1: Control Loket Pemanggil -->
+                <div class="bg-slate-950 border border-slate-800 rounded-3xl p-5 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <h3 class="text-xs font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-headset text-emerald-400"></i>
+                            <span>PANEL OPERATOR LOKET</span>
+                        </h3>
+                        <span id="active-counter-label" class="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-lg">Loket Pensiun</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 font-semibold mb-1">Pilih Loket Tugas Anda saat ini:</label>
+                        <select id="counter-select" onchange="window.updateSelectedCounter()" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-xs rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="Loket Pensiun">Loket Pensiun</option>
+                            <option value="Loket 1">Loket 1</option>
+                            <option value="Loket 2">Loket 2</option>
+                            <option value="Loket 3">Loket 3</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <button onclick="window.callNextQueue()" class="col-span-2 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-sm rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-98 transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-volume-high text-lg"></i>
+                            <span>PANGGIL ANTRIAN BERIKUTNYA</span>
+                        </button>
+
+                        <button onclick="window.recallQueue()" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>Panggil Ulang</span>
+                        </button>
+
+                        <button onclick="window.markCurrentAsCompleted()" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Tandai Selesai</span>
+                        </button>
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-between text-xs border-t border-slate-800">
+                        <button onclick="window.testSpeech()" class="text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-bullhorn text-emerald-400"></i>
+                            <span>Tes Suara Panggilan</span>
+                        </button>
+                        <button onclick="window.confirmResetQueue()" class="text-rose-400 hover:text-rose-300 transition flex items-center space-x-1.5 font-semibold">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Reset Antrian Hari Ini</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Box 2: Cetak Tiket Baru (Kios Cetak Tiket) -->
+                <div class="bg-slate-950 border border-slate-800 rounded-3xl p-5 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <h3 class="text-xs font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-print text-emerald-400"></i>
+                            <span>AMBIL TIKET / CETAK STRUK 80MM</span>
+                        </h3>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="auto-print-toggle" class="sr-only peer" checked>
+                            <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 relative"></div>
+                            <span class="ml-2 text-[11px] font-semibold text-slate-300">Auto Print</span>
+                        </label>
+                    </div>
+
+                    <p class="text-xs text-slate-400">Klik tombol di bawah untuk menerbitkan nomor antrian sesuai jenis layanan:</p>
+
+                    <!-- Service Category Buttons Grid -->
+                    <div class="grid grid-cols-1 gap-3" id="service-buttons-container">
+                        <!-- Injected dynamically via JavaScript -->
+                    </div>
+
+                    <button onclick="window.printPreviewReceipt()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-receipt text-emerald-400"></i>
+                        <span>Cetak Previu Struk Terakhir (80mm)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side Controls: Simulated 80mm Receipt Card & Table -->
+            <div class="lg:col-span-6 space-y-6">
+                
+                <!-- Card Simulasi Struk Thermal 80mm di Layar -->
+                <div class="bg-slate-950 border border-slate-800 rounded-3xl p-5 flex flex-col items-center">
+                    <div class="w-full flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                        <h3 class="text-xs font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-eye text-emerald-400"></i>
+                            <span>PREVIU STRUK THERMAL 80MM</span>
+                        </h3>
+                        <span class="text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">UKURAN 80MM</span>
+                    </div>
+
+                    <!-- Visual Receipt 80mm Mockup -->
+                    <div class="preview-80mm bg-white text-black font-receipt rounded-lg p-4 sm:p-5 text-center shadow-2xl border border-slate-300 flex flex-col justify-between my-2 text-xs">
+                        <div>
+                            <div class="font-extrabold text-sm sm:text-base uppercase tracking-tight text-black" id="prev-shop-name">POS IND KC CIAMIS 46200</div>
+                            <div class="text-[11px] text-gray-700" id="prev-shop-address">Jl. Jenderal Sudirman No. 02 Ciamis</div>
+                            <div class="text-[10px] text-gray-600 mb-2" id="prev-shop-phone">WA : 0822-4039-2352</div>
+                            <div class="border-b-2 border-dashed border-gray-400 my-2"></div>
+                            
+                            <div class="text-[10px] uppercase font-bold text-gray-600 mt-2">NOMOR ANTRIAN Anda</div>
+                            <div id="prev-ticket-number" class="text-5xl font-black font-mono my-2 text-black tracking-tight">A-001</div>
+                            <div id="prev-category-name" class="text-xs font-bold uppercase text-gray-800">A. Pensiunan</div>
+                        </div>
+
+                        <div>
+                            <div class="border-b-2 border-dashed border-gray-400 my-2"></div>
+                            <div class="flex justify-between text-[10px] text-gray-700 my-0.5">
+                                <span>Waktu Terbit:</span>
+                                <span id="prev-date-time" class="font-bold">--/--/---- --:--</span>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-gray-700 my-0.5">
+                                <span>Sisa Menunggu:</span>
+                                <span id="prev-waiting-count" class="font-bold">0 Orang</span>
+                            </div>
+                            <div class="border-b-2 border-dashed border-gray-400 my-2"></div>
+
+                            <p class="text-[10px] font-bold text-gray-800 uppercase mt-1">Terima Kasih Atas Kunjungan Anda</p>
+                            <p class="text-[9px] text-gray-600">Simpan tiket ini hingga nomor Anda dipanggil.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Daftar Antrian Realtime -->
+                <div class="bg-slate-950 border border-slate-800 rounded-3xl p-5 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <h3 class="text-xs font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-list-ol text-emerald-400"></i>
+                            <span>DAFTAR RIWAYAT ANTRIAN HARI INI</span>
+                        </h3>
+                        <div class="flex items-center space-x-1 text-[11px]">
+                            <button onclick="window.filterQueueTable('all')" id="filter-all" class="px-2.5 py-1 rounded-lg bg-slate-800 text-white font-bold">Semua</button>
+                            <button onclick="window.filterQueueTable('waiting')" id="filter-waiting" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Menunggu</button>
+                            <button onclick="window.filterQueueTable('called')" id="filter-called" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Dipanggil</button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900 text-slate-400 uppercase font-mono text-[10px] sticky top-0">
+                                <tr>
+                                    <th class="py-2.5 px-3">Tiket</th>
+                                    <th class="py-2.5 px-3">Kategori</th>
+                                    <th class="py-2.5 px-3">Waktu</th>
+                                    <th class="py-2.5 px-3">Status</th>
+                                    <th class="py-2.5 px-3">Loket</th>
+                                    <th class="py-2.5 px-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="queue-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                                <!-- Injected dynamically via JavaScript -->
+                            </tbody>
+                        </table>
+                        <div id="empty-table-msg" class="text-center py-8 text-xs text-slate-500 font-medium hidden">
+                            Belum ada antrian yang terbit hari ini.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Pengaturan & Sync Multi-PC -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-800 text-slate-200 my-8">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-sliders text-emerald-400"></i>
+                    <span>Pengaturan Aplikasi & Multi-PC</span>
+                </h3>
+                <button onclick="window.toggleSettingsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <!-- Multi-PC Firebase Sync Settings Box -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-emerald-500/30 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-emerald-400 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-network-wired"></i>
+                            <span>Koneksi Multi-PC (Firebase Cloud)</span>
+                        </span>
+                        <span id="modal-sync-badge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">Status: Lokal</span>
+                    </div>
+                    
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Kode Room Sync (Sama di Semua PC)</label>
+                        <input type="text" id="setting-room-id" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-emerald-300 font-mono font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Contoh: KANTOR-UTAMA" value="KANTOR-UTAMA">
+                        <p class="text-[10px] text-slate-400 mt-1">Gunakan kata kunci room yang sama di PC TV Display dan PC Operator Loket agar tersinkronisasi.</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Firebase Configuration JSON</label>
+                        <textarea id="setting-firebase-config" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}'></textarea>
+                        <div class="flex items-center justify-between mt-1">
+                            <p class="text-[10px] text-slate-400">Masukkan konfigurasi Web App dari Console Firebase Anda.</p>
+                            <button onclick="window.useDemoFirebaseConfig()" class="text-[10px] text-emerald-400 hover:underline font-semibold">Isi Contoh Config Demo</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Nama Instansi / Perusahaan</label>
+                    <input type="text" id="setting-shop-name" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="POS IND KC CIAMIS 46200">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Alamat Ringkas Struk</label>
+                    <input type="text" id="setting-shop-address" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="Jl. Jenderal Sudirman No. 02 Ciamis">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Nomor Telepon / Kontak</label>
+                    <input type="text" id="setting-shop-phone" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="WA : 0822-4039-2352">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Teks Berjalan Pengumuman TV (Marquee)</label>
+                    <textarea id="setting-marquee-text" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">Selamat datang di POS INDONESIA KC CIAMIS 46200. Mohon menunggu nomor antrian Anda dipanggil. Harap persiapkan dokumen Anda.</textarea>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-2">
+                <button onclick="window.toggleSettingsModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">Batal</button>
+                <button onclick="window.saveSettings()" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold shadow">Simpan & Hubungkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Cetak Struk Thermal 80mm Khusus Printer (@media print) -->
+    <div id="thermal-receipt-container" class="hidden">
+        <div style="text-align: center;">
+            <div style="font-weight: 800; font-size: 15px; text-transform: uppercase;" id="receipt-shop-name">POS IND KC CIAMIS 46200</div>
+            <div style="font-size: 11px;" id="receipt-shop-address">Jl. Jenderal Sudirman No. 02 Ciamis</div>
+            <div style="font-size: 11px; margin-bottom: 4px;" id="receipt-shop-phone">WA : 0822-4039-2352</div>
+            <div style="border-bottom: 2px dashed #000; margin: 4px 0;"></div>
+            
+            <div style="font-size: 11px; font-weight: bold; margin-top: 6px;">NOMOR ANTRIAN Anda</div>
+            <div id="receipt-ticket-number" style="font-size: 42px; font-weight: 900; margin: 4px 0; letter-spacing: -1px;">A-001</div>
+            <div id="receipt-category-name" style="font-size: 13px; font-weight: bold; text-transform: uppercase;">A. Pensiunan</div>
+            
+            <div style="border-bottom: 2px dashed #000; margin: 6px 0;"></div>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0;">
+                <span>Waktu Terbit:</span>
+                <span id="receipt-date-time" style="font-weight: bold;">--/--/---- --:--</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0;">
+                <span>Sisa Menunggu:</span>
+                <span id="receipt-waiting-count" style="font-weight: bold;">0 Orang</span>
+            </div>
+            
+            <div style="border-bottom: 2px dashed #000; margin: 6px 0;"></div>
+            
+            <div style="margin: 8px 0; text-align: center;">
+                <svg id="receipt-barcode" style="width: 100%; height: 32px; display: block; margin: 0 auto;"></svg>
+                <div id="receipt-barcode-num" style="font-size: 9px; letter-spacing: 2px;">*A001*</div>
+            </div>
+
+            <div style="font-size: 11px; font-weight: bold; margin-top: 4px;">Terima Kasih Atas Kunjungan Anda</div>
+            <div style="font-size: 10px;">Simpan tiket ini hingga nomor Anda dipanggil.</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Modules for Multi-PC Realtime Sync -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global State & Data Models
+        const SERVICE_CATEGORIES = [
+            { id: 'pensiun', code: 'A', name: 'A. Pensiunan', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' },
+            { id: 'teller', code: 'B', name: 'B. Loket / Teller', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/20' },
+            { id: 'cs', code: 'C', name: 'C. Customer Service', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20' }
+        ];
+
+        const COUNTERS_LIST = ['Loket Pensiun', 'Loket 1', 'Loket 2', 'Loket 3'];
+
+        let queueData = {
+            todayDate: new Date().toLocaleDateString('id-ID'),
+            queues: [],
+            counters: { pensiun: 0, teller: 0, cs: 0 },
+            counterLastCall: {
+                'Loket Pensiun': '---',
+                'Loket 1': '---',
+                'Loket 2': '---',
+                'Loket 3': '---'
+            },
+            currentCalledId: null,
+            lastCallEvent: null,
+            activeCounter: 'Loket Pensiun',
+            roomId: 'KANTOR-UTAMA',
+            firebaseConfigRaw: '',
+            settings: {
+                name: 'POS IND KC CIAMIS 46200',
+                address: 'Jl. Jenderal Sudirman No. 02 Ciamis',
+                phone: 'WA : 0822-4039-2352',
+                marquee: 'Selamat datang di POS INDONESIA KC CIAMIS 46200. Mohon menunggu nomor antrian Anda dipanggil. Harap persiapkan dokumen Anda.'
+            }
+        };
+
+        let activeFilter = 'all';
+        let db = null;
+        let auth = null;
+        let queueDocRef = null;
+        let lastHandledCallTimestamp = 0;
+
+        // Attach interactive functions directly to window object to prevent ReferenceErrors in inline HTML onclick
+        window.switchTab = function(tab) {
+            const displayView = document.getElementById('view-display');
+            const operatorView = document.getElementById('view-operator');
+            const btnDisplay = document.getElementById('tab-btn-display');
+            const btnOperator = document.getElementById('tab-btn-operator');
+
+            if (tab === 'display') {
+                displayView?.classList.remove('hidden');
+                operatorView?.classList.add('hidden');
+                if (btnDisplay) btnDisplay.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-2 bg-emerald-500 text-slate-950 shadow-md";
+                if (btnOperator) btnOperator.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center space-x-2";
+            } else {
+                displayView?.classList.add('hidden');
+                operatorView?.classList.remove('hidden');
+                if (btnOperator) btnOperator.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-2 bg-emerald-500 text-slate-950 shadow-md";
+                if (btnDisplay) btnDisplay.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center space-x-2";
+            }
+        };
+
+        window.toggleFullScreen = function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Gagal fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        };
+
+        window.toggleSettingsModal = function() {
+            document.getElementById('settings-modal')?.classList.toggle('hidden');
+        };
+
+        window.updateSelectedCounter = function() {
+            const selectEl = document.getElementById('counter-select');
+            if (selectEl) {
+                const val = selectEl.value;
+                queueData.activeCounter = val;
+                const labelEl = document.getElementById('active-counter-label');
+                if (labelEl) labelEl.innerText = val;
+                saveDataToSync();
+            }
+        };
+
+        window.takeNewQueue = function(categoryId) {
+            const category = SERVICE_CATEGORIES.find(c => c.id === categoryId);
+            if (!category) return;
+
+            queueData.counters[categoryId] = (queueData.counters[categoryId] || 0) + 1;
+            const seqNumber = queueData.counters[categoryId];
+            
+            const formattedSeq = String(seqNumber).padStart(3, '0');
+            const ticketNumber = `${category.code}-${formattedSeq}`;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const dateTimeStr = `${now.toLocaleDateString('id-ID')} ${timeStr}`;
+
+            const newTicket = {
+                id: 'Q_' + Date.now(),
+                ticketNumber: ticketNumber,
+                categoryCode: category.code,
+                categoryName: category.name,
+                timestamp: dateTimeStr,
+                timeOnly: timeStr,
+                status: 'waiting',
+                calledAtCounter: null
+            };
+
+            queueData.queues.push(newTicket);
+            saveDataToSync();
+
+            updateDashboardStats();
+            renderQueueTable();
+            updatePreviewCard(newTicket);
+
+            const isAutoPrint = document.getElementById('auto-print-toggle')?.checked;
+            if (isAutoPrint) {
+                window.printThermalReceipt(newTicket);
+            } else {
+                showToastNotification(`Tiket ${ticketNumber} diterbitkan!`);
+            }
+        };
+
+        window.callNextQueue = function() {
+            let nextTicket = null;
+
+            // Priority logic for Loket Pensiun -> Category A
+            if (queueData.activeCounter === 'Loket Pensiun') {
+                nextTicket = queueData.queues.find(q => q.status === 'waiting' && q.categoryCode === 'A');
+            }
+
+            if (!nextTicket) {
+                nextTicket = queueData.queues.find(q => q.status === 'waiting');
+            }
+
+            if (!nextTicket) {
+                showToastNotification("Tidak ada antrian menunggu saat ini.");
+                return;
+            }
+
+            nextTicket.status = 'called';
+            nextTicket.calledAtCounter = queueData.activeCounter;
+            queueData.currentCalledId = nextTicket.id;
+            queueData.counterLastCall[queueData.activeCounter] = nextTicket.ticketNumber;
+
+            // Broadcast call event across all connected PCs
+            queueData.lastCallEvent = {
+                timestamp: Date.now(),
+                ticketNumber: nextTicket.ticketNumber,
+                counterName: queueData.activeCounter
+            };
+
+            saveDataToSync();
+        };
+
+        window.recallQueue = function() {
+            if (!queueData.currentCalledId) {
+                showToastNotification("Belum ada antrian yang dipanggil!");
+                return;
+            }
+
+            const currentTicket = queueData.queues.find(q => q.id === queueData.currentCalledId);
+            if (currentTicket) {
+                queueData.lastCallEvent = {
+                    timestamp: Date.now(),
+                    ticketNumber: currentTicket.ticketNumber,
+                    counterName: currentTicket.calledAtCounter || queueData.activeCounter
+                };
+                saveDataToSync();
+            }
+        };
+
+        window.markCurrentAsCompleted = function() {
+            if (!queueData.currentCalledId) {
+                showToastNotification("Belum ada antrian aktif dipanggil!");
+                return;
+            }
+            window.markAsCompleted(queueData.currentCalledId);
+        };
+
+        window.markAsCompleted = function(ticketId) {
+            const ticket = queueData.queues.find(q => q.id === ticketId);
+            if (ticket) {
+                ticket.status = 'completed';
+                if (queueData.currentCalledId === ticketId) {
+                    queueData.currentCalledId = null;
+                }
+                saveDataToSync();
+                showToastNotification(`Antrian ${ticket.ticketNumber} Selesai.`);
+            }
+        };
+
+        window.confirmResetQueue = function() {
+            if (confirm("Apakah Anda yakin ingin mereset seluruh antrian hari ini di SEMUA PC? Nomor akan kembali dari 001.")) {
+                queueData.queues = [];
+                queueData.counters = { pensiun: 0, teller: 0, cs: 0 };
+                queueData.counterLastCall = { 'Loket Pensiun': '---', 'Loket 1': '---', 'Loket 2': '---', 'Loket 3': '---' };
+                queueData.currentCalledId = null;
+                queueData.lastCallEvent = null;
+
+                saveDataToSync();
+                updatePreviewCard(getDummyTicket());
+                showToastNotification("Seluruh antrian direset di semua PC.");
+            }
+        };
+
+        window.testSpeech = function() {
+            playChimeAndSpeak('A-001', queueData.activeCounter);
+        };
+
+        window.printPreviewReceipt = function() {
+            window.printThermalReceipt(getLatestOrDummyTicket());
+        };
+
+        window.filterQueueTable = function(status) {
+            activeFilter = status;
+            ['all', 'waiting', 'called'].forEach(s => {
+                const btn = document.getElementById(`filter-${s}`);
+                if (btn) {
+                    btn.className = s === status 
+                        ? "px-2.5 py-1 rounded-lg bg-slate-800 text-white font-bold" 
+                        : "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white";
+                }
+            });
+            renderQueueTable();
+        };
+
+        window.useDemoFirebaseConfig = function() {
+            const sample = {
+                apiKey: "AIzaSyDemoConfigKeyForQueueApp12345",
+                authDomain: "antrian-demo.firebaseapp.com",
+                projectId: "antrian-demo",
+                storageBucket: "antrian-demo.appspot.com",
+                messagingSenderId: "123456789012",
+                appId: "1:123456789012:web:abcdef123456"
+            };
+            const configTextarea = document.getElementById('setting-firebase-config');
+            if (configTextarea) configTextarea.value = JSON.stringify(sample, null, 2);
+            showToastNotification("Contoh config dimasukkan. Masukkan config Firebase asli Anda untuk koneksi Multi-PC.");
+        };
+
+        window.saveSettings = async function() {
+            queueData.roomId = document.getElementById('setting-room-id')?.value.trim() || 'KANTOR-UTAMA';
+            queueData.firebaseConfigRaw = document.getElementById('setting-firebase-config')?.value.trim() || '';
+
+            queueData.settings.name = document.getElementById('setting-shop-name')?.value || 'POS IND KC CIAMIS 46200';
+            queueData.settings.address = document.getElementById('setting-shop-address')?.value || 'Jl. Jenderal Sudirman No. 02 Ciamis';
+            queueData.settings.phone = document.getElementById('setting-shop-phone')?.value || 'WA : 0822-4039-2352';
+            queueData.settings.marquee = document.getElementById('setting-marquee-text')?.value || 'Selamat datang di POS INDONESIA KC CIAMIS 46200.';
+
+            saveDataToSync();
+            window.toggleSettingsModal();
+            updatePreviewCard(getLatestOrDummyTicket());
+            
+            showToastNotification("Pengaturan disimpan! Memperbarui koneksi Multi-PC...");
+            await initFirebaseSync();
+        };
+
+        window.printThermalReceipt = function(ticket) {
+            if (!ticket) ticket = getLatestOrDummyTicket();
+            const waitingCount = queueData.queues.filter(q => q.status === 'waiting' && q.id !== ticket.id).length;
+
+            if (document.getElementById('receipt-shop-name')) document.getElementById('receipt-shop-name').innerText = queueData.settings.name;
+            if (document.getElementById('receipt-shop-address')) document.getElementById('receipt-shop-address').innerText = queueData.settings.address;
+            if (document.getElementById('receipt-shop-phone')) document.getElementById('receipt-shop-phone').innerText = queueData.settings.phone;
+
+            if (document.getElementById('receipt-ticket-number')) document.getElementById('receipt-ticket-number').innerText = ticket.ticketNumber;
+            if (document.getElementById('receipt-category-name')) document.getElementById('receipt-category-name').innerText = ticket.categoryName;
+            if (document.getElementById('receipt-date-time')) document.getElementById('receipt-date-time').innerText = ticket.timestamp;
+            if (document.getElementById('receipt-waiting-count')) document.getElementById('receipt-waiting-count').innerText = `${waitingCount} Orang`;
+
+            generateBarcodeSVG(ticket.ticketNumber);
+
+            const container = document.getElementById('thermal-receipt-container');
+            if (container) {
+                container.classList.remove('hidden');
+                setTimeout(() => {
+                    window.print();
+                    container.classList.add('hidden');
+                }, 120);
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderServiceButtons();
+            initClock();
+            initSpeechSynthesis();
+            loadDataFromLocalStorage();
+            await initFirebaseSync();
+
+            const counterSelect = document.getElementById('counter-select');
+            if (counterSelect) counterSelect.value = queueData.activeCounter;
+            
+            const activeCounterLabel = document.getElementById('active-counter-label');
+            if (activeCounterLabel) activeCounterLabel.innerText = queueData.activeCounter;
+
+            updatePreviewCard(getLatestOrDummyTicket());
+        });
+
+        async function initFirebaseSync() {
+            try {
+                let firebaseConfig = null;
+
+                if (queueData.firebaseConfigRaw) {
+                    try {
+                        firebaseConfig = JSON.parse(queueData.firebaseConfigRaw);
+                    } catch(e) {
+                        console.error("Format JSON Firebase Config tidak valid", e);
+                    }
+                }
+
+                if (!firebaseConfig && typeof __firebase_config !== 'undefined') {
+                    try {
+                        firebaseConfig = JSON.parse(__firebase_config);
+                    } catch(e) {}
+                }
+
+                if (firebaseConfig && firebaseConfig.apiKey) {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'antrian-app-ciamis';
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    const cleanRoomId = (queueData.roomId || 'KANTOR-UTAMA').replace(/[^a-zA-Z0-9_-]/g, '_');
+                    
+                    queueDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'queueSystem', `room_${cleanRoomId}`);
+
+                    onSnapshot(queueDocRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const remoteData = docSnap.data();
+                            const todayStr = new Date().toLocaleDateString('id-ID');
+
+                            if (remoteData.todayDate === todayStr) {
+                                queueData = { ...queueData, ...remoteData };
+
+                                updateDashboardStats();
+                                renderTvCountersGrid();
+                                renderQueueTable();
+                                updateSettingsUI();
+
+                                const statusBadge = document.getElementById('sync-status-badge');
+                                const modalBadge = document.getElementById('modal-sync-badge');
+                                if (statusBadge) {
+                                    statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span><span>🟢 Real-time (${cleanRoomId})</span>`;
+                                    statusBadge.className = 'px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-semibold flex items-center space-x-1.5 cursor-pointer';
+                                }
+                                if (modalBadge) {
+                                    modalBadge.innerText = `Terhubung: ${cleanRoomId}`;
+                                    modalBadge.className = "text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-mono font-bold";
+                                }
+
+                                if (queueData.lastCallEvent && queueData.lastCallEvent.timestamp > lastHandledCallTimestamp) {
+                                    lastHandledCallTimestamp = queueData.lastCallEvent.timestamp;
+                                    
+                                    const heroBox = document.getElementById('main-call-hero-box');
+                                    if (heroBox) {
+                                        heroBox.classList.add('call-flash');
+                                        setTimeout(() => heroBox.classList.remove('call-flash'), 3500);
+                                    }
+
+                                    playChimeAndSpeak(queueData.lastCallEvent.ticketNumber, queueData.lastCallEvent.counterName);
+                                }
+                            }
+                        } else {
+                            saveDataToSync();
+                        }
+                    }, (err) => {
+                        console.error("Firestore sync error:", err);
+                        loadLocalFallback("Koneksi Cloud Gagal");
+                    });
+                } else {
+                    loadLocalFallback("Belum Diatur");
+                }
+            } catch (err) {
+                console.warn("Falling back to local storage:", err);
+                loadLocalFallback("Error Inisialisasi");
+            }
+        }
+
+        function loadLocalFallback(reason = "Single PC") {
+            const statusBadge = document.getElementById('sync-status-badge');
+            const modalBadge = document.getElementById('modal-sync-badge');
+            
+            if (statusBadge) {
+                statusBadge.innerHTML = `<span>🟡 Mode Lokal (${reason})</span>`;
+                statusBadge.className = 'px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-lg text-xs font-semibold cursor-pointer';
+            }
+            if (modalBadge) {
+                modalBadge.innerText = `Lokal (${reason})`;
+                modalBadge.className = "text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-mono font-bold";
+            }
+            updateDashboardStats();
+            renderTvCountersGrid();
+            renderQueueTable();
+        }
+
+        async function saveDataToSync() {
+            localStorage.setItem('qprint_pos_ciamis_queue_80mm', JSON.stringify(queueData));
+
+            if (db && queueDocRef && auth?.currentUser) {
+                try {
+                    await setDoc(queueDocRef, queueData);
+                } catch (e) {
+                    console.error("Error saving data to realtime cloud:", e);
+                }
+            }
+        }
+
+        function loadDataFromLocalStorage() {
+            const saved = localStorage.getItem('qprint_pos_ciamis_queue_80mm');
+            const todayStr = new Date().toLocaleDateString('id-ID');
+
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.todayDate === todayStr) {
+                        queueData = { ...queueData, ...parsed };
+                    } else {
+                        queueData.todayDate = todayStr;
+                        queueData.queues = [];
+                        queueData.counters = { pensiun: 0, teller: 0, cs: 0 };
+                        queueData.counterLastCall = { 'Loket Pensiun': '---', 'Loket 1': '---', 'Loket 2': '---', 'Loket 3': '---' };
+                        queueData.currentCalledId = null;
+                        queueData.lastCallEvent = null;
+                        saveDataToSync();
+                    }
+                } catch (e) {
+                    console.error("Gagal membaca localStorage", e);
+                }
+            }
+            updateSettingsUI();
+        }
+
+        function updateSettingsUI() {
+            if (document.getElementById('header-shop-title')) document.getElementById('header-shop-title').innerText = queueData.settings.name;
+            if (document.getElementById('tv-marquee-text')) document.getElementById('tv-marquee-text').innerText = queueData.settings.marquee;
+
+            if (document.getElementById('setting-room-id')) document.getElementById('setting-room-id').value = queueData.roomId || 'KANTOR-UTAMA';
+            if (document.getElementById('setting-firebase-config')) document.getElementById('setting-firebase-config').value = queueData.firebaseConfigRaw || '';
+
+            if (document.getElementById('setting-shop-name')) document.getElementById('setting-shop-name').value = queueData.settings.name;
+            if (document.getElementById('setting-shop-address')) document.getElementById('setting-shop-address').value = queueData.settings.address;
+            if (document.getElementById('setting-shop-phone')) document.getElementById('setting-shop-phone').value = queueData.settings.phone;
+            if (document.getElementById('setting-marquee-text')) document.getElementById('setting-marquee-text').value = queueData.settings.marquee;
+        }
+
+        function initClock() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const dateString = now.toLocaleDateString('id-ID', dateOptions);
+
+                const clockEl = document.getElementById('tv-clock-display');
+                const dateEl = document.getElementById('tv-date-display');
+                if (clockEl) clockEl.innerText = timeString;
+                if (dateEl) dateEl.innerText = dateString;
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+
+        function renderServiceButtons() {
+            const container = document.getElementById('service-buttons-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            SERVICE_CATEGORIES.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `p-3.5 border rounded-xl flex items-center justify-between transition text-left shadow-sm active:scale-98 ${cat.color}`;
+                btn.onclick = () => window.takeNewQueue(cat.id);
+
+                btn.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-900 border border-slate-700 font-mono text-white">${cat.code}</span>
+                        <span class="font-bold text-xs text-white">${cat.name}</span>
+                    </div>
+                    <i class="fa-solid fa-plus-circle text-base"></i>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function renderTvCountersGrid() {
+            const container = document.getElementById('tv-counters-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            COUNTERS_LIST.forEach(counter => {
+                const lastNum = queueData.counterLastCall[counter] || '---';
+                const isCurrentActive = queueData.queues.some(q => q.status === 'called' && q.calledAtCounter === counter);
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border flex flex-col justify-between transition ${
+                    isCurrentActive 
+                        ? 'bg-emerald-500/10 border-emerald-500/50 shadow-lg shadow-emerald-500/10' 
+                        : 'bg-slate-900/60 border-slate-800'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase">${counter}</span>
+                        ${isCurrentActive ? '<span class="text-[9px] bg-emerald-500 text-slate-950 font-black px-1.5 py-0.2 rounded uppercase">AKTIF</span>' : ''}
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black font-mono my-1 ${isCurrentActive ? 'text-emerald-400' : 'text-slate-200'}">
+                        ${lastNum}
+                    </div>
+                    <div class="text-[10px] text-slate-500 font-medium">Nomor Terakhir</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateDashboardStats() {
+            const total = queueData.queues.length;
+            const waiting = queueData.queues.filter(q => q.status === 'waiting').length;
+            const completed = queueData.queues.filter(q => q.status === 'completed').length;
+
+            if (document.getElementById('display-total-count')) document.getElementById('display-total-count').innerText = total;
+            if (document.getElementById('display-waiting-count')) document.getElementById('display-waiting-count').innerText = `${waiting} Orang`;
+
+            if (document.getElementById('stat-op-total')) document.getElementById('stat-op-total').innerText = total;
+            if (document.getElementById('stat-op-waiting')) document.getElementById('stat-op-waiting').innerText = waiting;
+            if (document.getElementById('stat-op-completed')) document.getElementById('stat-op-completed').innerText = completed;
+
+            const currentTicket = queueData.queues.find(q => q.id === queueData.currentCalledId);
+
+            if (currentTicket && currentTicket.status === 'called') {
+                if (document.getElementById('display-called-number')) document.getElementById('display-called-number').innerText = currentTicket.ticketNumber;
+                if (document.getElementById('display-called-category')) document.getElementById('display-called-category').innerText = currentTicket.categoryName;
+                if (document.getElementById('display-called-counter')) document.getElementById('display-called-counter').innerText = currentTicket.calledAtCounter;
+
+                if (document.getElementById('stat-op-current')) document.getElementById('stat-op-current').innerText = currentTicket.ticketNumber;
+            } else {
+                if (document.getElementById('display-called-number')) document.getElementById('display-called-number').innerText = '---';
+                if (document.getElementById('display-called-category')) document.getElementById('display-called-category').innerText = 'MENUNGGU PEMANGGILAN';
+                if (document.getElementById('display-called-counter')) document.getElementById('display-called-counter').innerText = '---';
+
+                if (document.getElementById('stat-op-current')) document.getElementById('stat-op-current').innerText = '---';
+            }
+        }
+
+        function updatePreviewCard(ticket) {
+            if (!ticket) ticket = getDummyTicket();
+            const waitingCount = queueData.queues.filter(q => q.status === 'waiting' && q.id !== ticket.id).length;
+
+            if (document.getElementById('prev-shop-name')) document.getElementById('prev-shop-name').innerText = queueData.settings.name;
+            if (document.getElementById('prev-shop-address')) document.getElementById('prev-shop-address').innerText = queueData.settings.address;
+            if (document.getElementById('prev-shop-phone')) document.getElementById('prev-shop-phone').innerText = queueData.settings.phone;
+
+            if (document.getElementById('prev-ticket-number')) document.getElementById('prev-ticket-number').innerText = ticket.ticketNumber;
+            if (document.getElementById('prev-category-name')) document.getElementById('prev-category-name').innerText = ticket.categoryName;
+            if (document.getElementById('prev-date-time')) document.getElementById('prev-date-time').innerText = ticket.timestamp;
+            if (document.getElementById('prev-waiting-count')) document.getElementById('prev-waiting-count').innerText = `${waitingCount} Orang`;
+        }
+
+        function getLatestOrDummyTicket() {
+            if (queueData.queues.length > 0) {
+                return queueData.queues[queueData.queues.length - 1];
+            }
+            return getDummyTicket();
+        }
+
+        function getDummyTicket() {
+            return {
+                id: 'dummy',
+                ticketNumber: 'A-001',
+                categoryName: 'A. Pensiunan',
+                timestamp: `${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}`
+            };
+        }
+
+        function generateBarcodeSVG(code) {
+            const svg = document.getElementById('receipt-barcode');
+            if (!svg) return;
+            svg.innerHTML = '';
+            let x = 5;
+            const height = 30;
+            
+            for (let i = 0; i < 34; i++) {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                const width = (i % 3 === 0) ? 3 : (i % 2 === 0) ? 2 : 1.2;
+                rect.setAttribute('x', x);
+                rect.setAttribute('y', '0');
+                rect.setAttribute('width', width);
+                rect.setAttribute('height', height);
+                rect.setAttribute('fill', '#000');
+                svg.appendChild(rect);
+                x += width + (i % 4 === 0 ? 2.5 : 1.5);
+            }
+            if (document.getElementById('receipt-barcode-num')) {
+                document.getElementById('receipt-barcode-num').innerText = `*${code.replace('-', '')}*`;
+            }
+        }
+
+        function renderQueueTable() {
+            const tbody = document.getElementById('queue-table-body');
+            const emptyMsg = document.getElementById('empty-table-msg');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let filteredList = [...queueData.queues];
+            if (activeFilter !== 'all') {
+                filteredList = filteredList.filter(q => q.status === activeFilter);
+            }
+
+            filteredList.reverse();
+
+            if (filteredList.length === 0) {
+                if (emptyMsg) emptyMsg.classList.remove('hidden');
+                return;
+            } else {
+                if (emptyMsg) emptyMsg.classList.add('hidden');
+            }
+
+            filteredList.forEach(q => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/50 transition-colors";
+
+                let statusBadge = '';
+                if (q.status === 'waiting') {
+                    statusBadge = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold px-2 py-0.5 rounded-full"><i class="fa-regular fa-clock mr-1"></i>Menunggu</span>`;
+                } else if (q.status === 'called') {
+                    statusBadge = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold px-2 py-0.5 rounded-full animate-pulse"><i class="fa-solid fa-volume-high mr-1"></i>Dipanggil</span>`;
+                } else {
+                    statusBadge = `<span class="bg-slate-800 text-slate-400 text-[10px] font-semibold px-2 py-0.5 rounded-full"><i class="fa-solid fa-check mr-1"></i>Selesai</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-bold text-white font-mono text-xs">${q.ticketNumber}</td>
+                    <td class="py-2.5 px-3 font-medium text-xs">${q.categoryName}</td>
+                    <td class="py-2.5 px-3 text-slate-400 text-xs">${q.timeOnly}</td>
+                    <td class="py-2.5 px-3">${statusBadge}</td>
+                    <td class="py-2.5 px-3 text-slate-300 font-medium text-xs">${q.calledAtCounter || '-'}</td>
+                    <td class="py-2.5 px-3 text-center">
+                        <div class="flex items-center justify-center space-x-1">
+                            ${q.status === 'called' ? `
+                                <button onclick="window.markAsCompleted('${q.id}')" title="Tandai Selesai" class="p-1 text-emerald-400 hover:bg-slate-800 rounded">
+                                    <i class="fa-solid fa-circle-check text-sm"></i>
+                                </button>
+                            ` : ''}
+                            <button onclick='window.printThermalReceipt(${JSON.stringify(q)})' title="Cetak Struk 80mm" class="p-1 text-slate-400 hover:bg-slate-800 rounded">
+                                <i class="fa-solid fa-print text-sm"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function initSpeechSynthesis() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = function() {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+        }
+
+        function playChimeAndSpeak(ticketNumber, counterName) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioCtx.currentTime;
+
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(392.00, now);
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.8);
+
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(523.25, now + 0.3);
+                gain2.gain.setValueAtTime(0.35, now + 0.3);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start(now + 0.3);
+                osc2.stop(now + 1.2);
+            } catch(e) {
+                console.log("Audio play allowed on user interaction.");
+            }
+
+            setTimeout(() => {
+                speakQueueCall(ticketNumber, counterName);
+            }, 800);
+        }
+
+        function speakQueueCall(ticketNumber, counterName) {
+            if (!('speechSynthesis' in window)) return;
+
+            window.speechSynthesis.cancel();
+            const formattedTicket = ticketNumber.replace('-', ' ');
+            const textToSpeak = `Nomor antrian ${formattedTicket}, silakan menuju ke ${counterName}`;
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'id-ID';
+            utterance.rate = 0.88;
+            utterance.pitch = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+            if (idVoice) {
+                utterance.voice = idVoice;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function showToastNotification(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-emerald-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl shadow-2xl z-50 flex items-center space-x-2 transition-all duration-300';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${msg}</span>`;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
